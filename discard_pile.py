@@ -19,3 +19,6 @@ class DiscardPile:
 
     def __repr__(self):
         return f"DiscardPile: {len(self)}"
+
+    def peek(self):
+        return self.cards[-1]
