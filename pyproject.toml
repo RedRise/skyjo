@@ -6,6 +6,7 @@ authors = ["GG <polluxxx@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
+windows-curses = "^2.3.1"
 
 [tool.poetry.dev-dependencies]
 black = "^22.12.0"

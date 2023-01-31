@@ -1,6 +1,6 @@
 from typing import List
 from deck import Deck
-from player_board import PlayerBoard, BoardCard
+from player_board import PlayerBoard
 from discard_pile import DiscardPile
 
 

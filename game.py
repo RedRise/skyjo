@@ -1,6 +1,5 @@
 import uuid
 from board import Board
-from deck import Deck
 from player import Player
 from discard_pile import DiscardPile
 
@@ -10,8 +9,7 @@ class Game:
     name: str
     uuid: uuid.UUID
     board: Board
-    # players: list[Player]
-    current_turn: int
+    current_turn: int = -1
     remaining_plays: int = None
     discard_pile: DiscardPile = None
 
@@ -32,6 +30,9 @@ class Game:
         return f"Game({self.name!r}, {self.players!r}, turn={self.current_turn!r}"
 
     def play(self):
+        for player in self.players:
+            player.reveal_first_cards(self.board)
+
         while True:
             if self.remaining_plays == 0:
                 break

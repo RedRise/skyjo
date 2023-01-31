@@ -1,4 +1,4 @@
-from player_reveal import PlayerReveal
+from players.player_reveal import PlayerReveal
 from deck import Deck
 import pytest
 

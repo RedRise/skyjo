@@ -1,6 +1,5 @@
 from game import Game
-from player_reveal import PlayerReveal
-from player_term import PlayerTerm
+from players.player_reveal import PlayerReveal
 
 
 def test_game_reveal():
@@ -8,11 +7,5 @@ def test_game_reveal():
     game.play()
 
     assert game.remaining_plays == 0
-    assert game.players[0].check_end()
-    assert game.players[1].check_end()
-
-
-def test_game_basic():
-    game = Game("Test", [PlayerTerm("Bob"), PlayerTerm("Alice")])
-    game.initialize()
-    game.play()
+    assert game.players[0].playerBoard.check_end()
+    assert game.players[1].playerBoard.check_end()

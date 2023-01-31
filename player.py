@@ -26,7 +26,7 @@ class Player(ABC):
         self.playerBoard.view()
 
     @abstractmethod
-    def reveal_first_cards(self):
+    def reveal_first_cards(self, board: Board):
         """
         First step, reveal the first 2 cards of your board.
         """
@@ -41,25 +41,25 @@ class Player(ABC):
         pass
 
     @abstractmethod
-    def what_to_replace(self, card: int) -> int:
+    def what_to_replace(self, card: int, board: Board) -> int:
         """
         Return the index of the card you want to replace, or -1 if you don't want
         """
         pass
 
     @abstractmethod
-    def what_to_reveal(self) -> int:
+    def what_to_reveal(self, board: Board) -> int:
         """
         Return the index of the card you want to reveal
         """
         pass
 
-    def reveal_one(self):
+    def reveal_one(self, board: Board):
         """
         Reveal one card from your board.
         """
 
-        reveal_index: int = self.what_to_reveal()
+        reveal_index: int = self.what_to_reveal(board)
         if self.playerBoard.cards[reveal_index].revealed:
             raise ValueError("Card already revealed")
 
@@ -70,7 +70,7 @@ class Player(ABC):
         Replace a card from your board with a new one.
         """
 
-        boardCard = self.cards[index]
+        boardCard = self.playerBoard.cards[index]
         discard_pile.add(boardCard.value)
         self.playerBoard.cards[index] = BoardCard(card, revealed=True)
 
@@ -84,10 +84,10 @@ class Player(ABC):
         else:
             card = board.discard_pile.draw()
 
-        replace_index: int = self.what_to_replace(card)
+        replace_index: int = self.what_to_replace(card, board)
 
         if replace_index < 0:
-            self.reveal_one()
+            self.reveal_one(board)
             board.discard_pile.add(card)
         else:
             self.replace_card(replace_index, card, board.discard_pile)
