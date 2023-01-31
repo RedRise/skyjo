@@ -1,4 +1,5 @@
-from player import Player, NB_ROWS
+from player_board import NB_ROWS
+from player import Player
 
 
 def input_to_index(nb_cards: int) -> int:

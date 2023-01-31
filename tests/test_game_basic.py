@@ -4,10 +4,7 @@ from player_term import PlayerTerm
 
 
 def test_game_reveal():
-    game = Game("Test")
-    game.add_player(PlayerReveal("Bob"))
-    game.add_player(PlayerReveal("Alice"))
-    game.initialize()
+    game = Game("Test", [PlayerReveal("Bob"), PlayerReveal("Alice")])
     game.play()
 
     assert game.remaining_plays == 0
@@ -16,8 +13,6 @@ def test_game_reveal():
 
 
 def test_game_basic():
-    game = Game("Test")
-    game.add_player(PlayerReveal("Bob"))
-    game.add_player(PlayerTerm("Alice"))
+    game = Game("Test", [PlayerTerm("Bob"), PlayerTerm("Alice")])
     game.initialize()
     game.play()

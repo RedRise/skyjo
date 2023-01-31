@@ -1,31 +1,16 @@
 from abc import ABC, abstractmethod
 from typing import List
-from deck import Deck
 from discard_pile import DiscardPile
-
-NB_ROWS = 3
-NB_COLS = 4
-
-
-class BoardCard:
-    value: int
-    revealed: bool
-
-    def __init__(self, value, revealed=False):
-        self.value = value
-        self.revealed = revealed
-
-    def __repr__(self):
-        return "{:2d}".format(self.value) if self.revealed else "XX"
+from board import Board, PlayerBoard, BoardCard
 
 
 class Player(ABC):
 
-    cards: List[BoardCard] = None
-    max_col_idx: int
+    playerBoard: PlayerBoard
 
     def __init__(self, name):
         self.name = name
+        self.playerBoard = PlayerBoard(name)
 
     def __repr__(self):
         return f"Player {self.name}"
@@ -34,102 +19,82 @@ class Player(ABC):
         return len(self.cards)
 
     def initialize(self, deck):
-        if len(deck) < NB_ROWS * NB_COLS:
-            raise ValueError("Not enough cards in deck")
-
-        if self.cards:
-            raise ValueError("Player already initialized")
-
-        self.cards = []
-        for _ in range(NB_ROWS * NB_COLS):
-            self.cards.append(BoardCard(deck.draw(), revealed=False))
-
-        self.max_col_idx = NB_COLS - 1
-
-    def get_column(self, column: int):
-        if column > self.max_col_idx or column < 0:
-            raise ValueError("Column does not exist")
-
-        return self.cards[column * NB_ROWS : (column + 1) * NB_ROWS]
-
-    def check_column(self, column: int):
-        if column > self.max_col_idx or column < 0:
-            raise ValueError("Column does not exist")
-
-        column = self.get_column(column)
-
-        return all([x.value == column[0].value for x in column[1:]]) and all(
-            [x.revealed for x in column]
-        )
+        self.playerBoard.initialize(deck)
 
     def view(self):
         print(self.name)
-        for i in range(NB_ROWS):
-            row = []
-            for j in range(self.max_col_idx + 1):
-                row.append(str(self.cards[i + j * NB_ROWS]))
-
-            print(" ".join(row))
-
-    def remove_column(self, column: int):
-        if column > self.max_col_idx or column < 0:
-            raise ValueError("Column does not exist")
-
-        self.cards = (
-            self.cards[: column * NB_ROWS] + self.cards[(column + 1) * NB_ROWS :]
-        )
-        self.max_col_idx -= 1
-
-    def check_end(self) -> bool:
-        return all([x.revealed for x in self.cards])
+        self.playerBoard.view()
 
     @abstractmethod
-    def first_reveal(self):
+    def reveal_first_cards(self):
+        """
+        First step, reveal the first 2 cards of your board.
+        """
         pass
 
     @abstractmethod
-    def prefer_to_draw(self, top_discard_card: int) -> bool:
+    def want_to_draw(self, board: Board) -> bool:
+        """
+        Return True if you want to draw a card from the deck, False if you want
+        to draw from the discard pile.
+        """
         pass
 
     @abstractmethod
-    def check_for_replace(self, card: int) -> int:
+    def what_to_replace(self, card: int) -> int:
+        """
+        Return the index of the card you want to replace, or -1 if you don't want
+        """
         pass
 
     @abstractmethod
-    def choose_to_reveal(self) -> int:
+    def what_to_reveal(self) -> int:
+        """
+        Return the index of the card you want to reveal
+        """
         pass
 
     def reveal_one(self):
-        reveal_index: int = self.choose_to_reveal()
-        if self.cards[reveal_index].revealed:
+        """
+        Reveal one card from your board.
+        """
+
+        reveal_index: int = self.what_to_reveal()
+        if self.playerBoard.cards[reveal_index].revealed:
             raise ValueError("Card already revealed")
 
-        self.cards[reveal_index].revealed = True
+        self.playerBoard.cards[reveal_index].revealed = True
 
     def replace_card(self, index: int, card: int, discard_pile: DiscardPile):
+        """
+        Replace a card from your board with a new one.
+        """
+
         boardCard = self.cards[index]
         discard_pile.add(boardCard.value)
-        self.cards[index] = BoardCard(card, revealed=True)
+        self.playerBoard.cards[index] = BoardCard(card, revealed=True)
 
-    def take_turn(self, discard_pile: DiscardPile, deck: Deck):
-        if not self.cards:
+    def take_turn(self, board: Board):
+        if not self.playerBoard.cards:
             raise ValueError("Player not initialized")
 
         card: int
-        if self.prefer_to_draw(discard_pile.peek()):
-            card = deck.draw()
+        if self.want_to_draw(board):
+            card = board.draw()
         else:
-            card = discard_pile.draw()
+            card = board.discard_pile.draw()
 
-        replace_index: int = self.check_for_replace(card)
+        replace_index: int = self.what_to_replace(card)
 
         if replace_index < 0:
             self.reveal_one()
-            discard_pile.add(card)
+            board.discard_pile.add(card)
         else:
-            self.replace_card(replace_index, card, discard_pile)
+            self.replace_card(replace_index, card, board.discard_pile)
 
         # remove column if possible
-        for col in range(self.max_col_idx, -1, -1):
-            if self.check_column(col):
-                self.remove_column(col)
+        for col in range(self.playerBoard.max_col_idx, -1, -1):
+            if self.playerBoard.check_column(col):
+                self.playerBoard.remove_column(col)
+
+        self.playerBoard.remove_columns()
