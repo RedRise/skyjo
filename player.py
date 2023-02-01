@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List
 from discard_pile import DiscardPile
-from board import Board, PlayerBoard, BoardCard
+from player_board import PlayerBoard, BoardCard
+from board import Board
 
 
 class Player(ABC):
