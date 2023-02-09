@@ -1,8 +1,8 @@
 import curses
+from curses import wrapper
 from typing import Dict
 from game import Game
 from players.player_reveal import PlayerReveal
-from players.player_term import PlayerTerm
 from player_board import PlayerBoard, NB_ROWS, NB_COLS
 
 
@@ -51,6 +51,7 @@ class CursesUI:
     def __init__(self):
         self.screen = curses.initscr()
         self.height, self.width = self.screen.getmaxyx()
+        self.players = {}
 
     def update_maxyx(self):
         self.height, self.width = self.screen.getmaxyx()
@@ -64,50 +65,68 @@ class CursesUI:
         self.discard.refresh()
 
     def draw_player_boards(self, game: Game):
-        for player in game.players:
-            self.players[player.name] = player_board_to_window(player.playerBoard)
+        for i, player in enumerate(game.players):
+            player_win = player_board_to_window(player.playerBoard)
+            player_win.mvwin(8, 2 + i * 20)
+            player_win.refresh()
+            self.players[player.name] = player_win
+
+    def clear_all(self):
+        self.screen.clear()
+        self.deck.clear()
+        self.discard.clear()
+        for player in self.players.values():
+            player.clear()
 
     def resize(self):
-        pass
+        self.update_maxyx()
+        # self.clear_all()
 
-    def draw_prompt(self, prompt):
+    def cdraw_prompt(self, prompt):
         self.screen.addstr(self.height - 1, 0, prompt)
 
 
-cui = CursesUI()
-
-game = Game("Test", [PlayerReveal("Bob"), PlayerReveal("Alice")])
-game.initialize()
-
-cui.screen.refresh()
-cui.draw_deck(game.board.deck)
-cui.draw_discard(game.board.discard_pile)
+def get_game():
+    return Game(
+        "Test", [PlayerReveal("Bob"), PlayerReveal("Alice"), PlayerReveal("Charlie")]
+    )
 
 
-# def refresh_all():
-# cursesItems["screen"].clear()
-# cursesItems["screen"].border("|", "|", "-", "-", "+", "+", "+", "+")
-# cursesItems["screen"].refresh()
+def main(stdscr):
+    # Clear screen
+    stdscr.clear()
 
-# for i, player in enumerate(game.players):
-# cursesItems[player.name].mvwin(8, 2 + i * 20)
-# cursesItems[player.name].refresh()
+    game = get_game()
+    game.initialize()
 
-# cursesItems["deck"].refresh()
-# cursesItems["discard"].refresh()
+    cui = CursesUI()
 
-# cui.screen.refresh()
+    should_quit = False
 
-while True:
+    for _ in game.debug([]):
+        while True:
+            cui.screen.clear()
+            cui.screen.refresh()
 
-    cui.draw_prompt("Press q to quit")
-    c = cui.screen.getch()
+            cui.draw_deck(game.board.deck)
+            cui.draw_discard(game.board.discard_pile)
+            cui.draw_player_boards(game)
 
-    if c == ord("q"):
-        break
-    elif c == curses.KEY_RESIZE:
-        cui.update_maxyx()
-        cui.resize()
+            cui.draw_prompt("Press c to continue / q to quit")
+            # cui.screen.refresh()
+
+            c = stdscr.getch()
+            if c == ord("q"):
+                should_quit = True
+                break
+            elif c == ord("c"):
+                break
+            elif c == curses.KEY_RESIZE:
+                cui.resize()
+                pass
+
+        if should_quit:
+            break
 
 
-curses.endwin()
+wrapper(main)
